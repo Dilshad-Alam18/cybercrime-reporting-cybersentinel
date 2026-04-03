@@ -2,10 +2,11 @@ import { useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Eye, Clock, AlertTriangle, CheckCircle, Filter } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Search, Eye, Clock, AlertTriangle, CheckCircle } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { getCases, subscribe } from "@/lib/caseStore";
+import { getCases, subscribe, type CaseRecord } from "@/lib/caseStore";
 
 const priorityConfig: Record<string, { label: string; className: string }> = {
   high: { label: "High", className: "bg-cyber-red/10 text-cyber-red border-cyber-red/20" },
@@ -22,6 +23,7 @@ const statusConfig: Record<string, { label: string; icon: typeof Clock }> = {
 const Investigator = () => {
   const [search, setSearch] = useState("");
   const [filterPriority, setFilterPriority] = useState<string>("all");
+  const [selectedCase, setSelectedCase] = useState<CaseRecord | null>(null);
   const cases = useSyncExternalStore(subscribe, getCases);
 
   const filtered = cases.filter((c) => {
@@ -97,7 +99,7 @@ const Investigator = () => {
                     <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
                       <StatusIcon className="h-4 w-4" /> {statusLabel}
                     </span>
-                    <Button size="sm" variant="outline" className="border-border">
+                    <Button size="sm" variant="outline" className="border-border" onClick={() => setSelectedCase(c)}>
                       <Eye className="h-4 w-4 mr-1" /> View
                     </Button>
                   </div>
@@ -108,6 +110,64 @@ const Investigator = () => {
         </div>
       </section>
       <Footer />
+
+      <Dialog open={!!selectedCase} onOpenChange={(open) => !open && setSelectedCase(null)}>
+        <DialogContent className="max-w-lg">
+          {selectedCase && (() => {
+            const StatusIcon = (statusConfig[selectedCase.status] || statusConfig.open).icon;
+            const statusLabel = (statusConfig[selectedCase.status] || statusConfig.open).label;
+            return (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-3">
+                    <span className="font-mono text-primary">{selectedCase.id}</span>
+                    <Badge variant="outline" className={priorityConfig[selectedCase.priority]?.className}>
+                      {priorityConfig[selectedCase.priority]?.label}
+                    </Badge>
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-lg font-semibold">{selectedCase.type}</h3>
+                    <p className="text-sm text-muted-foreground mt-1">{selectedCase.description}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Location</span>
+                      <p className="font-medium">{selectedCase.location}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Date</span>
+                      <p className="font-medium">{selectedCase.date}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Status</span>
+                      <p className="font-medium flex items-center gap-1.5"><StatusIcon className="h-4 w-4" /> {statusLabel}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Evidence Files</span>
+                      <p className="font-medium">{selectedCase.files.length > 0 ? selectedCase.files.join(", ") : "None"}</p>
+                    </div>
+                  </div>
+                  {selectedCase.updates.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-sm mb-2">Case Updates</h4>
+                      <div className="space-y-2 border-l-2 border-primary/20 pl-4">
+                        {selectedCase.updates.map((u, i) => (
+                          <div key={i}>
+                            <p className="text-sm">{u.text}</p>
+                            <p className="text-xs text-muted-foreground">{u.time}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
