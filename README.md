@@ -21,15 +21,15 @@ CyberSentinel provides a user-friendly and proactive approach to cybersecurity b
 - User-friendly interface  
 
 ## 🛠️ Tech Stack  
-HTML
-CSS
-JavaScript
-Node.js
-Express.js
-MongoDB
-REST API
-Git
-GitHub
+HTML,
+CSS,
+JavaScript,
+Node.js,
+Express.js,
+MongoDB,
+REST API,
+Git,
+GitHub,
 Firebase
 
 
