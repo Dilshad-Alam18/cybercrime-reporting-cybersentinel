@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Shield, Upload, AlertTriangle, CreditCard, Users, MessageSquare, Database, FileText } from "lucide-react";
+import { Shield, Upload, AlertTriangle, CreditCard, Users, MessageSquare, Database, FileText, X } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
+import { addCase, generateCaseId } from "@/lib/caseStore";
 
 const crimeTypes = [
   { value: "otp-fraud", label: "OTP Fraud", icon: CreditCard },
@@ -17,20 +18,56 @@ const crimeTypes = [
   { value: "other", label: "Other", icon: FileText },
 ];
 
+const crimeTypeLabels: Record<string, string> = {
+  "otp-fraud": "OTP Fraud",
+  "harassment": "Online Harassment",
+  "data-theft": "Data Theft",
+  "identity-theft": "Identity Theft",
+  "phishing": "Phishing",
+  "other": "Other",
+};
+
 const ReportCrime = () => {
   const { toast } = useToast();
   const [crimeType, setCrimeType] = useState("");
   const [description, setDescription] = useState("");
+  const [incidentDate, setIncidentDate] = useState("");
+  const [location, setLocation] = useState("");
   const [files, setFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setFiles((prev) => [...prev, ...Array.from(e.target.files!)]);
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const caseId = generateCaseId();
+    addCase({
+      id: caseId,
+      type: crimeTypeLabels[crimeType] || crimeType,
+      priority: "high",
+      status: "open",
+      date: incidentDate || new Date().toISOString().split("T")[0],
+      location: location || "Not specified",
+      description,
+      files: files.map((f) => f.name),
+      updates: [{ time: "Just now", text: "Complaint recorded on blockchain" }],
+    });
     toast({
       title: "Complaint Submitted",
-      description: "Your complaint has been recorded on the blockchain. Case ID: CS-" + Math.random().toString(36).substr(2, 8).toUpperCase(),
+      description: `Your complaint has been recorded on the blockchain. Case ID: ${caseId}`,
     });
     setCrimeType("");
     setDescription("");
+    setIncidentDate("");
+    setLocation("");
     setFiles([]);
   };
 
@@ -46,7 +83,6 @@ const ReportCrime = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Crime Type Selection */}
             <div>
               <label className="text-sm font-medium mb-3 block">Select Crime Type</label>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -68,7 +104,6 @@ const ReportCrime = () => {
               </div>
             </div>
 
-            {/* Description */}
             <div>
               <label className="text-sm font-medium mb-2 block">Description</label>
               <Textarea
@@ -80,45 +115,49 @@ const ReportCrime = () => {
               />
             </div>
 
-            {/* Date & Location */}
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium mb-2 block">Incident Date</label>
-                <Input type="date" className="bg-card border-border" />
+                <Input type="date" value={incidentDate} onChange={(e) => setIncidentDate(e.target.value)} className="bg-card border-border" />
               </div>
               <div>
                 <label className="text-sm font-medium mb-2 block">Location (Optional)</label>
-                <Input placeholder="City, State" className="bg-card border-border" />
+                <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="City, State" className="bg-card border-border" />
               </div>
             </div>
 
-            {/* Evidence Upload */}
             <div>
               <label className="text-sm font-medium mb-2 block">Upload Evidence (IPFS Secured)</label>
-              <div className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-primary/30 transition-colors">
+              <div
+                className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-primary/30 transition-colors cursor-pointer"
+                onClick={() => fileInputRef.current?.click()}
+              >
                 <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground mb-2">Drag & drop files or click to browse</p>
+                <p className="text-sm text-muted-foreground mb-2">Click to browse or drag & drop files</p>
                 <p className="text-xs text-muted-foreground">Screenshots, documents, audio — max 20MB each</p>
                 <input
+                  ref={fileInputRef}
                   type="file"
                   multiple
-                  className="absolute inset-0 opacity-0 cursor-pointer"
-                  onChange={(e) => setFiles(Array.from(e.target.files || []))}
-                  style={{ position: "relative" }}
+                  className="hidden"
+                  onChange={handleFileChange}
                 />
               </div>
               {files.length > 0 && (
                 <div className="mt-3 space-y-1">
                   {files.map((f, i) => (
                     <div key={i} className="text-xs text-muted-foreground flex items-center gap-2">
-                      <FileText className="h-3 w-3" /> {f.name}
+                      <FileText className="h-3 w-3" />
+                      <span className="flex-1">{f.name}</span>
+                      <button type="button" onClick={() => removeFile(i)} className="text-muted-foreground hover:text-foreground">
+                        <X className="h-3 w-3" />
+                      </button>
                     </div>
                   ))}
                 </div>
               )}
             </div>
 
-            {/* Language */}
             <div>
               <label className="text-sm font-medium mb-2 block">Preferred Language</label>
               <Select>
