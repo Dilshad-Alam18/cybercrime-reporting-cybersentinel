@@ -1,19 +1,11 @@
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Search, Eye, Clock, AlertTriangle, CheckCircle, Filter } from "lucide-react";
+import { Search, Eye, Clock, AlertTriangle, CheckCircle, Filter } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-
-const cases = [
-  { id: "CS-A8F3B2D1", type: "OTP Fraud", priority: "high", status: "open", date: "2026-04-01", location: "Mumbai, MH" },
-  { id: "CS-7C2E9F4A", type: "Online Harassment", priority: "medium", status: "investigating", date: "2026-03-28", location: "Delhi, DL" },
-  { id: "CS-D5B1E8C3", type: "Data Theft", priority: "high", status: "open", date: "2026-03-25", location: "Bangalore, KA" },
-  { id: "CS-F2A9C7E1", type: "Phishing", priority: "low", status: "resolved", date: "2026-03-20", location: "Chennai, TN" },
-  { id: "CS-B4D6E8F2", type: "Identity Theft", priority: "high", status: "open", date: "2026-04-02", location: "Pune, MH" },
-  { id: "CS-E1C3A5B7", type: "OTP Fraud", priority: "medium", status: "investigating", date: "2026-03-30", location: "Kolkata, WB" },
-];
+import { getCases, subscribe } from "@/lib/caseStore";
 
 const priorityConfig: Record<string, { label: string; className: string }> = {
   high: { label: "High", className: "bg-cyber-red/10 text-cyber-red border-cyber-red/20" },
@@ -30,6 +22,7 @@ const statusConfig: Record<string, { label: string; icon: typeof Clock }> = {
 const Investigator = () => {
   const [search, setSearch] = useState("");
   const [filterPriority, setFilterPriority] = useState<string>("all");
+  const cases = useSyncExternalStore(subscribe, getCases);
 
   const filtered = cases.filter((c) => {
     const matchSearch = c.id.toLowerCase().includes(search.toLowerCase()) || c.type.toLowerCase().includes(search.toLowerCase());
@@ -47,7 +40,6 @@ const Investigator = () => {
             <p className="text-muted-foreground">AI-triaged case queue for authorized law enforcement.</p>
           </div>
 
-          {/* Stats bar */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             {[
               { label: "Open Cases", value: cases.filter(c => c.status === "open").length, color: "text-cyber-red" },
@@ -62,7 +54,6 @@ const Investigator = () => {
             ))}
           </div>
 
-          {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-3 mb-6">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -83,17 +74,17 @@ const Investigator = () => {
             </div>
           </div>
 
-          {/* Case list */}
           <div className="space-y-3">
             {filtered.map((c) => {
-              const StatusIcon = statusConfig[c.status].icon;
+              const StatusIcon = (statusConfig[c.status] || statusConfig.open).icon;
+              const statusLabel = (statusConfig[c.status] || statusConfig.open).label;
               return (
                 <div key={c.id} className="border border-border rounded-xl bg-card p-5 hover:border-primary/30 transition-all flex flex-col sm:flex-row sm:items-center gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-1">
                       <span className="font-mono text-sm text-primary">{c.id}</span>
-                      <Badge variant="outline" className={priorityConfig[c.priority].className}>
-                        {priorityConfig[c.priority].label}
+                      <Badge variant="outline" className={priorityConfig[c.priority]?.className}>
+                        {priorityConfig[c.priority]?.label}
                       </Badge>
                     </div>
                     <h3 className="font-medium">{c.type}</h3>
@@ -104,7 +95,7 @@ const Investigator = () => {
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                      <StatusIcon className="h-4 w-4" /> {statusConfig[c.status].label}
+                      <StatusIcon className="h-4 w-4" /> {statusLabel}
                     </span>
                     <Button size="sm" variant="outline" className="border-border">
                       <Eye className="h-4 w-4 mr-1" /> View
