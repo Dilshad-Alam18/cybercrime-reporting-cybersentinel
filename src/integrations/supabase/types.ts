@@ -38,6 +38,51 @@ export type Database = {
         }
         Relationships: []
       }
+      cases: {
+        Row: {
+          case_id: string
+          created_at: string
+          description: string
+          files: string[] | null
+          id: string
+          incident_date: string | null
+          location: string | null
+          priority: string
+          reporter_id: string | null
+          status: string
+          type: string
+          updates: Json | null
+        }
+        Insert: {
+          case_id: string
+          created_at?: string
+          description: string
+          files?: string[] | null
+          id?: string
+          incident_date?: string | null
+          location?: string | null
+          priority?: string
+          reporter_id?: string | null
+          status?: string
+          type: string
+          updates?: Json | null
+        }
+        Update: {
+          case_id?: string
+          created_at?: string
+          description?: string
+          files?: string[] | null
+          id?: string
+          incident_date?: string | null
+          location?: string | null
+          priority?: string
+          reporter_id?: string | null
+          status?: string
+          type?: string
+          updates?: Json | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
