@@ -1,4 +1,4 @@
-import { useState, useSyncExternalStore } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Search, Eye, Clock, AlertTriangle, CheckCircle } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { getCases, subscribe, type CaseRecord } from "@/lib/caseStore";
+import { useCases, type CaseRecord } from "@/hooks/useCases";
 
 const priorityConfig: Record<string, { label: string; className: string }> = {
   high: { label: "High", className: "bg-cyber-red/10 text-cyber-red border-cyber-red/20" },
@@ -24,10 +24,10 @@ const Investigator = () => {
   const [search, setSearch] = useState("");
   const [filterPriority, setFilterPriority] = useState<string>("all");
   const [selectedCase, setSelectedCase] = useState<CaseRecord | null>(null);
-  const cases = useSyncExternalStore(subscribe, getCases);
+  const { data: cases = [], isLoading } = useCases();
 
   const filtered = cases.filter((c) => {
-    const matchSearch = c.id.toLowerCase().includes(search.toLowerCase()) || c.type.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = c.case_id.toLowerCase().includes(search.toLowerCase()) || c.type.toLowerCase().includes(search.toLowerCase());
     const matchPriority = filterPriority === "all" || c.priority === filterPriority;
     return matchSearch && matchPriority;
   });
@@ -76,37 +76,44 @@ const Investigator = () => {
             </div>
           </div>
 
-          <div className="space-y-3">
-            {filtered.map((c) => {
-              const StatusIcon = (statusConfig[c.status] || statusConfig.open).icon;
-              const statusLabel = (statusConfig[c.status] || statusConfig.open).label;
-              return (
-                <div key={c.id} className="border border-border rounded-xl bg-card p-5 hover:border-primary/30 transition-all flex flex-col sm:flex-row sm:items-center gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-1">
-                      <span className="font-mono text-sm text-primary">{c.id}</span>
-                      <Badge variant="outline" className={priorityConfig[c.priority]?.className}>
-                        {priorityConfig[c.priority]?.label}
-                      </Badge>
+          {isLoading ? (
+            <p className="text-muted-foreground text-center py-10">Loading cases...</p>
+          ) : (
+            <div className="space-y-3">
+              {filtered.map((c) => {
+                const StatusIcon = (statusConfig[c.status] || statusConfig.open).icon;
+                const statusLabel = (statusConfig[c.status] || statusConfig.open).label;
+                return (
+                  <div key={c.id} className="border border-border rounded-xl bg-card p-5 hover:border-primary/30 transition-all flex flex-col sm:flex-row sm:items-center gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-1">
+                        <span className="font-mono text-sm text-primary">{c.case_id}</span>
+                        <Badge variant="outline" className={priorityConfig[c.priority]?.className}>
+                          {priorityConfig[c.priority]?.label}
+                        </Badge>
+                      </div>
+                      <h3 className="font-medium">{c.type}</h3>
+                      <div className="flex gap-4 mt-1 text-xs text-muted-foreground">
+                        <span>{c.location}</span>
+                        <span>{c.incident_date || c.created_at?.split("T")[0]}</span>
+                      </div>
                     </div>
-                    <h3 className="font-medium">{c.type}</h3>
-                    <div className="flex gap-4 mt-1 text-xs text-muted-foreground">
-                      <span>{c.location}</span>
-                      <span>{c.date}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                        <StatusIcon className="h-4 w-4" /> {statusLabel}
+                      </span>
+                      <Button size="sm" variant="outline" className="border-border" onClick={() => setSelectedCase(c)}>
+                        <Eye className="h-4 w-4 mr-1" /> View
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                      <StatusIcon className="h-4 w-4" /> {statusLabel}
-                    </span>
-                    <Button size="sm" variant="outline" className="border-border" onClick={() => setSelectedCase(c)}>
-                      <Eye className="h-4 w-4 mr-1" /> View
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+              {filtered.length === 0 && (
+                <p className="text-muted-foreground text-center py-10">No cases found.</p>
+              )}
+            </div>
+          )}
         </div>
       </section>
       <Footer />
@@ -116,11 +123,12 @@ const Investigator = () => {
           {selectedCase && (() => {
             const StatusIcon = (statusConfig[selectedCase.status] || statusConfig.open).icon;
             const statusLabel = (statusConfig[selectedCase.status] || statusConfig.open).label;
+            const updates = (selectedCase.updates ?? []) as { time: string; text: string }[];
             return (
               <>
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-3">
-                    <span className="font-mono text-primary">{selectedCase.id}</span>
+                    <span className="font-mono text-primary">{selectedCase.case_id}</span>
                     <Badge variant="outline" className={priorityConfig[selectedCase.priority]?.className}>
                       {priorityConfig[selectedCase.priority]?.label}
                     </Badge>
@@ -138,7 +146,7 @@ const Investigator = () => {
                     </div>
                     <div>
                       <span className="text-muted-foreground">Date</span>
-                      <p className="font-medium">{selectedCase.date}</p>
+                      <p className="font-medium">{selectedCase.incident_date || selectedCase.created_at?.split("T")[0]}</p>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Status</span>
@@ -146,14 +154,14 @@ const Investigator = () => {
                     </div>
                     <div>
                       <span className="text-muted-foreground">Evidence Files</span>
-                      <p className="font-medium">{selectedCase.files.length > 0 ? selectedCase.files.join(", ") : "None"}</p>
+                      <p className="font-medium">{selectedCase.files && selectedCase.files.length > 0 ? selectedCase.files.join(", ") : "None"}</p>
                     </div>
                   </div>
-                  {selectedCase.updates.length > 0 && (
+                  {updates.length > 0 && (
                     <div>
                       <h4 className="font-semibold text-sm mb-2">Case Updates</h4>
                       <div className="space-y-2 border-l-2 border-primary/20 pl-4">
-                        {selectedCase.updates.map((u, i) => (
+                        {updates.map((u, i) => (
                           <div key={i}>
                             <p className="text-sm">{u.text}</p>
                             <p className="text-xs text-muted-foreground">{u.time}</p>

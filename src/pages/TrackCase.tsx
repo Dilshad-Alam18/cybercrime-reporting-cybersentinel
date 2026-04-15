@@ -1,10 +1,10 @@
-import { useState, useSyncExternalStore } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Clock, CheckCircle, AlertCircle, Shield } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { getCases, subscribe } from "@/lib/caseStore";
+import { useCaseByIdQuery } from "@/hooks/useCases";
 
 const statusConfig: Record<string, { label: string; icon: typeof Clock; className: string }> = {
   pending: { label: "Pending Review", icon: Clock, className: "text-cyber-amber" },
@@ -15,10 +15,10 @@ const statusConfig: Record<string, { label: string; icon: typeof Clock; classNam
 
 const TrackCase = () => {
   const [caseId, setCaseId] = useState("");
-  const [searched, setSearched] = useState(false);
-  const cases = useSyncExternalStore(subscribe, getCases);
+  const [searchId, setSearchId] = useState("");
+  const { data: foundCase, isFetching } = useCaseByIdQuery(searchId, searchId.length > 0);
 
-  const foundCase = cases.find((c) => c.id.toLowerCase() === caseId.toLowerCase());
+  const handleSearch = () => setSearchId(caseId.trim());
 
   return (
     <div className="min-h-screen">
@@ -37,19 +37,21 @@ const TrackCase = () => {
               onChange={(e) => setCaseId(e.target.value)}
               placeholder="Enter Case ID (e.g., CS-XXXXXXXX)"
               className="bg-card border-border font-mono"
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             />
-            <Button onClick={() => setSearched(true)} className="glow-blue-sm shrink-0">
+            <Button onClick={handleSearch} className="glow-blue-sm shrink-0" disabled={isFetching}>
               <Search className="h-4 w-4 mr-2" /> Track
             </Button>
           </div>
 
-          {searched && foundCase && (() => {
+          {searchId && !isFetching && foundCase && (() => {
             const config = statusConfig[foundCase.status] || statusConfig.open;
             const Icon = config.icon;
+            const updates = (foundCase.updates ?? []) as { time: string; text: string }[];
             return (
               <div className="border border-border rounded-xl bg-card p-6 space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="font-mono text-sm text-muted-foreground">{foundCase.id}</span>
+                  <span className="font-mono text-sm text-muted-foreground">{foundCase.case_id}</span>
                   <span className={`flex items-center gap-1.5 text-sm font-medium ${config.className}`}>
                     <Icon className="h-4 w-4" />
                     {config.label}
@@ -57,17 +59,17 @@ const TrackCase = () => {
                 </div>
                 <div className="grid grid-cols-3 gap-4 text-sm">
                   <div><span className="text-muted-foreground block text-xs">Type</span>{foundCase.type}</div>
-                  <div><span className="text-muted-foreground block text-xs">Filed</span>{foundCase.date}</div>
-                  <div><span className="text-muted-foreground block text-xs">Updates</span>{foundCase.updates.length}</div>
+                  <div><span className="text-muted-foreground block text-xs">Filed</span>{foundCase.incident_date || foundCase.created_at?.split("T")[0]}</div>
+                  <div><span className="text-muted-foreground block text-xs">Updates</span>{updates.length}</div>
                 </div>
                 <div className="pt-4 border-t border-border">
                   <h4 className="text-sm font-medium mb-3">Timeline</h4>
                   <div className="space-y-3">
-                    {foundCase.updates.map((t, i) => (
+                    {updates.map((t, i) => (
                       <div key={i} className="flex gap-3 text-sm">
                         <div className="flex flex-col items-center">
                           <div className="h-2 w-2 rounded-full bg-primary" />
-                          {i < foundCase.updates.length - 1 && <div className="w-px h-full bg-border" />}
+                          {i < updates.length - 1 && <div className="w-px h-full bg-border" />}
                         </div>
                         <div>
                           <span className="text-xs text-muted-foreground">{t.time}</span>
@@ -81,7 +83,7 @@ const TrackCase = () => {
             );
           })()}
 
-          {searched && !foundCase && (
+          {searchId && !isFetching && !foundCase && (
             <div className="text-center py-10 text-muted-foreground">
               <AlertCircle className="h-8 w-8 mx-auto mb-3 text-cyber-amber" />
               <p>No case found. Please check your Case ID and try again.</p>

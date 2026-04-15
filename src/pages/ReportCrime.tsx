@@ -7,7 +7,7 @@ import { Shield, Upload, AlertTriangle, CreditCard, Users, MessageSquare, Databa
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
-import { addCase, generateCaseId } from "@/lib/caseStore";
+import { useAddCase, generateCaseId } from "@/hooks/useCases";
 
 const crimeTypes = [
   { value: "otp-fraud", label: "OTP Fraud", icon: CreditCard },
@@ -29,6 +29,7 @@ const crimeTypeLabels: Record<string, string> = {
 
 const ReportCrime = () => {
   const { toast } = useToast();
+  const addCase = useAddCase();
   const [crimeType, setCrimeType] = useState("");
   const [description, setDescription] = useState("");
   const [incidentDate, setIncidentDate] = useState("");
@@ -46,29 +47,37 @@ const ReportCrime = () => {
     setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const caseId = generateCaseId();
-    addCase({
-      id: caseId,
-      type: crimeTypeLabels[crimeType] || crimeType,
-      priority: "high",
-      status: "open",
-      date: incidentDate || new Date().toISOString().split("T")[0],
-      location: location || "Not specified",
-      description,
-      files: files.map((f) => f.name),
-      updates: [{ time: "Just now", text: "Complaint recorded on blockchain" }],
-    });
-    toast({
-      title: "Complaint Submitted",
-      description: `Your complaint has been recorded on the blockchain. Case ID: ${caseId}`,
-    });
-    setCrimeType("");
-    setDescription("");
-    setIncidentDate("");
-    setLocation("");
-    setFiles([]);
+    try {
+      await addCase.mutateAsync({
+        case_id: caseId,
+        type: crimeTypeLabels[crimeType] || crimeType,
+        priority: "high",
+        status: "open",
+        incident_date: incidentDate || null,
+        location: location || "Not specified",
+        description,
+        files: files.map((f) => f.name),
+        updates: [{ time: "Just now", text: "Complaint recorded on blockchain" }],
+      });
+      toast({
+        title: "Complaint Submitted",
+        description: `Your complaint has been recorded. Case ID: ${caseId}`,
+      });
+      setCrimeType("");
+      setDescription("");
+      setIncidentDate("");
+      setLocation("");
+      setFiles([]);
+    } catch {
+      toast({
+        title: "Error",
+        description: "Failed to submit complaint. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -174,8 +183,8 @@ const ReportCrime = () => {
               </Select>
             </div>
 
-            <Button type="submit" size="lg" className="w-full glow-blue" disabled={!crimeType || !description}>
-              Submit Anonymous Report
+            <Button type="submit" size="lg" className="w-full glow-blue" disabled={!crimeType || !description || addCase.isPending}>
+              {addCase.isPending ? "Submitting..." : "Submit Anonymous Report"}
             </Button>
             <p className="text-xs text-center text-muted-foreground">
               Your report will be encrypted and stored on Ethereum blockchain via smart contract.
