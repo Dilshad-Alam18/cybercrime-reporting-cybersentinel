@@ -10,6 +10,7 @@ const SignUp = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [role, setRole] = useState<"reporter" | "investigator">("reporter");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -33,7 +34,10 @@ const SignUp = () => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: window.location.origin },
+      options: {
+        emailRedirectTo: window.location.origin,
+        data: { role },
+      },
     });
 
     if (error) {
@@ -41,7 +45,7 @@ const SignUp = () => {
     } else {
       toast({
         title: "Account created!",
-        description: "Please check your email to verify your account, then sign in.",
+        description: "You can now sign in with your credentials.",
       });
       navigate("/signin");
     }
@@ -59,14 +63,43 @@ const SignUp = () => {
             </span>
           </Link>
           <h1 className="text-2xl font-bold text-foreground">Create Account</h1>
-          <p className="text-muted-foreground mt-2">Register as a crime reporter</p>
-        </div>
-
-        <div className="bg-card border border-border rounded-lg p-4 text-sm text-muted-foreground">
-          <p>📋 <strong className="text-foreground">Reporter Account</strong> — You'll be able to submit crime reports and track your cases. Investigator access is restricted to authorized personnel only.</p>
+          <p className="text-muted-foreground mt-2">Join CyberSentinel</p>
         </div>
 
         <form onSubmit={handleSignUp} className="space-y-4">
+          {/* Role Selection */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">I am a</label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setRole("reporter")}
+                className={`p-4 rounded-lg border text-center transition-all ${
+                  role === "reporter"
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border bg-card text-muted-foreground hover:border-primary/30"
+                }`}
+              >
+                <div className="text-2xl mb-1">📋</div>
+                <div className="font-medium text-sm">Reporter</div>
+                <div className="text-xs mt-0.5 opacity-70">Report & track cases</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setRole("investigator")}
+                className={`p-4 rounded-lg border text-center transition-all ${
+                  role === "investigator"
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border bg-card text-muted-foreground hover:border-primary/30"
+                }`}
+              >
+                <div className="text-2xl mb-1">🕵️</div>
+                <div className="font-medium text-sm">Investigator</div>
+                <div className="text-xs mt-0.5 opacity-70">Investigate & manage</div>
+              </button>
+            </div>
+          </div>
+
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">Email</label>
             <Input
@@ -113,7 +146,7 @@ const SignUp = () => {
 
           <Button type="submit" className="w-full glow-blue-sm" disabled={loading}>
             {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <UserPlus className="h-4 w-4 mr-2" />}
-            Create Account
+            Create {role === "investigator" ? "Investigator" : "Reporter"} Account
           </Button>
         </form>
 
