@@ -74,6 +74,26 @@ export function useAddCase() {
   });
 }
 
+export function useUpdateCaseStatus() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const { data, error } = await supabase
+        .from("cases")
+        .update({ status })
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cases"] });
+      queryClient.invalidateQueries({ queryKey: ["case"] });
+    },
+  });
+}
+
 export function generateCaseId(): string {
   return "CS-" + Math.random().toString(36).substr(2, 8).toUpperCase();
 }

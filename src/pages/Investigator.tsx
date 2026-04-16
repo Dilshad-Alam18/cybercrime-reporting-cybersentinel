@@ -3,10 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Eye, Clock, AlertTriangle, CheckCircle } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { useCases, type CaseRecord } from "@/hooks/useCases";
+import { useCases, useUpdateCaseStatus, type CaseRecord } from "@/hooks/useCases";
+import { useToast } from "@/hooks/use-toast";
 
 const priorityConfig: Record<string, { label: string; className: string }> = {
   high: { label: "High", className: "bg-cyber-red/10 text-cyber-red border-cyber-red/20" },
@@ -25,12 +27,26 @@ const Investigator = () => {
   const [filterPriority, setFilterPriority] = useState<string>("all");
   const [selectedCase, setSelectedCase] = useState<CaseRecord | null>(null);
   const { data: cases = [], isLoading } = useCases();
+  const updateStatus = useUpdateCaseStatus();
+  const { toast } = useToast();
 
   const filtered = cases.filter((c) => {
     const matchSearch = c.case_id.toLowerCase().includes(search.toLowerCase()) || c.type.toLowerCase().includes(search.toLowerCase());
     const matchPriority = filterPriority === "all" || c.priority === filterPriority;
     return matchSearch && matchPriority;
   });
+
+  const handleStatusChange = async (caseRecord: CaseRecord, newStatus: string) => {
+    try {
+      await updateStatus.mutateAsync({ id: caseRecord.id, status: newStatus });
+      if (selectedCase?.id === caseRecord.id) {
+        setSelectedCase({ ...caseRecord, status: newStatus });
+      }
+      toast({ title: "Status Updated", description: `Case ${caseRecord.case_id} is now "${statusConfig[newStatus]?.label || newStatus}".` });
+    } catch {
+      toast({ title: "Error", description: "Failed to update status.", variant: "destructive" });
+    }
+  };
 
   return (
     <div className="min-h-screen">
@@ -99,9 +115,24 @@ const Investigator = () => {
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                        <StatusIcon className="h-4 w-4" /> {statusLabel}
-                      </span>
+                      <Select value={c.status} onValueChange={(val) => handleStatusChange(c, val)}>
+                        <SelectTrigger className="w-[140px] bg-card border-border text-sm h-9">
+                          <span className="flex items-center gap-1.5">
+                            <StatusIcon className="h-3.5 w-3.5" /> {statusLabel}
+                          </span>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="open">
+                            <span className="flex items-center gap-1.5"><AlertTriangle className="h-3.5 w-3.5" /> Open</span>
+                          </SelectItem>
+                          <SelectItem value="investigating">
+                            <span className="flex items-center gap-1.5"><Eye className="h-3.5 w-3.5" /> Investigating</span>
+                          </SelectItem>
+                          <SelectItem value="resolved">
+                            <span className="flex items-center gap-1.5"><CheckCircle className="h-3.5 w-3.5" /> Resolved</span>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
                       <Button size="sm" variant="outline" className="border-border" onClick={() => setSelectedCase(c)}>
                         <Eye className="h-4 w-4 mr-1" /> View
                       </Button>
@@ -150,7 +181,18 @@ const Investigator = () => {
                     </div>
                     <div>
                       <span className="text-muted-foreground">Status</span>
-                      <p className="font-medium flex items-center gap-1.5"><StatusIcon className="h-4 w-4" /> {statusLabel}</p>
+                      <div className="mt-1">
+                        <Select value={selectedCase.status} onValueChange={(val) => handleStatusChange(selectedCase, val)}>
+                          <SelectTrigger className="w-[140px] bg-card border-border text-sm h-8">
+                            <span className="flex items-center gap-1.5"><StatusIcon className="h-3.5 w-3.5" /> {statusLabel}</span>
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="open">Open</SelectItem>
+                            <SelectItem value="investigating">Investigating</SelectItem>
+                            <SelectItem value="resolved">Resolved</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Evidence Files</span>
