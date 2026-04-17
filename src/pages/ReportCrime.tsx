@@ -79,7 +79,7 @@ const ReportCrime = () => {
       await addCase.mutateAsync({
         case_id: caseId,
         type: crimeTypeLabels[crimeType] || crimeType,
-        priority: "high",
+        priority,
         status: "open",
         incident_date: incidentDate || null,
         location: location || "Not specified",
@@ -96,6 +96,7 @@ const ReportCrime = () => {
       setDescription("");
       setIncidentDate("");
       setLocation("");
+      setPriority("medium");
       setFiles([]);
     } catch {
       toast({
