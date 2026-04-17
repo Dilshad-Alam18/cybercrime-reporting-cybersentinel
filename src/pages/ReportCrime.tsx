@@ -35,7 +35,6 @@ const ReportCrime = () => {
   const [description, setDescription] = useState("");
   const [incidentDate, setIncidentDate] = useState("");
   const [location, setLocation] = useState("");
-  const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
   const [files, setFiles] = useState<File[]>([]);
   const [submittedCaseId, setSubmittedCaseId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -62,29 +61,15 @@ const ReportCrime = () => {
     e.preventDefault();
     const caseId = generateCaseId();
     try {
-      // Upload evidence files to storage
-      const uploadedUrls: string[] = [];
-      for (const file of files) {
-        const ext = file.name.split(".").pop();
-        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-        const path = `${caseId}/${Date.now()}-${safeName}`;
-        const { error: uploadError } = await supabase.storage
-          .from("evidence")
-          .upload(path, file, { contentType: file.type || undefined, upsert: false });
-        if (uploadError) throw uploadError;
-        const { data: pub } = supabase.storage.from("evidence").getPublicUrl(path);
-        uploadedUrls.push(pub.publicUrl);
-      }
-
       await addCase.mutateAsync({
         case_id: caseId,
         type: crimeTypeLabels[crimeType] || crimeType,
-        priority,
+        priority: "high",
         status: "open",
         incident_date: incidentDate || null,
         location: location || "Not specified",
         description,
-        files: uploadedUrls,
+        files: files.map((f) => f.name),
         updates: [{ time: "Just now", text: "Complaint recorded on blockchain" }],
       });
       setSubmittedCaseId(caseId);
@@ -96,7 +81,6 @@ const ReportCrime = () => {
       setDescription("");
       setIncidentDate("");
       setLocation("");
-      setPriority("medium");
       setFiles([]);
     } catch {
       toast({
@@ -178,29 +162,6 @@ const ReportCrime = () => {
                   <label className="text-sm font-medium mb-2 block">Location (Optional)</label>
                   <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="City, State" className="bg-card border-border" />
                 </div>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-2 block">Priority / Severity</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {([
-                    { value: "low", label: "Low", className: "text-cyber-green border-cyber-green/40 bg-cyber-green/10" },
-                    { value: "medium", label: "Medium", className: "text-cyber-amber border-cyber-amber/40 bg-cyber-amber/10" },
-                    { value: "high", label: "High", className: "text-cyber-red border-cyber-red/40 bg-cyber-red/10" },
-                  ] as const).map((p) => (
-                    <button
-                      type="button"
-                      key={p.value}
-                      onClick={() => setPriority(p.value)}
-                      className={`p-3 rounded-lg border text-sm font-medium transition-all ${
-                        priority === p.value ? p.className : "border-border bg-card text-muted-foreground hover:border-primary/30"
-                      }`}
-                    >
-                      {p.label}
-                    </button>
-                  ))}
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">Select how urgent this case is. Investigators will be guided by this.</p>
               </div>
 
               <div>
