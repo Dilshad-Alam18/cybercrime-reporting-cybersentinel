@@ -198,26 +198,9 @@ const Investigator = () => {
                       <span className="text-muted-foreground">Evidence Files</span>
                       {selectedCase.files && selectedCase.files.length > 0 ? (
                         <ul className="mt-1 space-y-1">
-                          {selectedCase.files.map((url, i) => {
-                            const name = url.split("/").pop()?.replace(/^\d+-/, "") || `File ${i + 1}`;
-                            const isUrl = url.startsWith("http");
-                            return (
-                              <li key={i} className="text-sm">
-                                {isUrl ? (
-                                  <a
-                                    href={url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-primary hover:underline break-all"
-                                  >
-                                    {name}
-                                  </a>
-                                ) : (
-                                  <span className="font-medium">{url}</span>
-                                )}
-                              </li>
-                            );
-                          })}
+                          {selectedCase.files.map((f, i) => (
+                            <li key={i} className="text-sm font-medium">{f}</li>
+                          ))}
                         </ul>
                       ) : (
                         <p className="font-medium">None</p>
