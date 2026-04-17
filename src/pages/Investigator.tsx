@@ -201,17 +201,40 @@ const Investigator = () => {
                           {selectedCase.files.map((url, i) => {
                             const name = url.split("/").pop()?.replace(/^\d+-/, "") || `File ${i + 1}`;
                             const isUrl = url.startsWith("http");
+                            const handleDownload = async (e: React.MouseEvent) => {
+                              e.preventDefault();
+                              try {
+                                const res = await fetch(url);
+                                if (!res.ok) throw new Error("fetch failed");
+                                const blob = await res.blob();
+                                const blobUrl = URL.createObjectURL(blob);
+                                const a = document.createElement("a");
+                                a.href = blobUrl;
+                                a.download = name;
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                                URL.revokeObjectURL(blobUrl);
+                              } catch {
+                                window.open(url, "_blank", "noopener,noreferrer");
+                              }
+                            };
                             return (
-                              <li key={i} className="text-sm">
+                              <li key={i} className="text-sm flex items-center gap-2">
                                 {isUrl ? (
-                                  <a
-                                    href={url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-primary hover:underline break-all"
-                                  >
-                                    {name}
-                                  </a>
+                                  <>
+                                    <a
+                                      href={url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-primary hover:underline break-all flex-1"
+                                    >
+                                      {name}
+                                    </a>
+                                    <Button size="sm" variant="outline" className="border-border h-7 text-xs" onClick={handleDownload}>
+                                      Download
+                                    </Button>
+                                  </>
                                 ) : (
                                   <span className="font-medium">{url}</span>
                                 )}
