@@ -8,6 +8,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
 import { useAddCase, generateCaseId } from "@/hooks/useCases";
+import { supabase } from "@/integrations/supabase/client";
 
 const crimeTypes = [
   { value: "otp-fraud", label: "OTP Fraud", icon: CreditCard },
@@ -60,6 +61,20 @@ const ReportCrime = () => {
     e.preventDefault();
     const caseId = generateCaseId();
     try {
+      // Upload evidence files to storage
+      const uploadedUrls: string[] = [];
+      for (const file of files) {
+        const ext = file.name.split(".").pop();
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const path = `${caseId}/${Date.now()}-${safeName}`;
+        const { error: uploadError } = await supabase.storage
+          .from("evidence")
+          .upload(path, file, { contentType: file.type || undefined, upsert: false });
+        if (uploadError) throw uploadError;
+        const { data: pub } = supabase.storage.from("evidence").getPublicUrl(path);
+        uploadedUrls.push(pub.publicUrl);
+      }
+
       await addCase.mutateAsync({
         case_id: caseId,
         type: crimeTypeLabels[crimeType] || crimeType,
@@ -68,7 +83,7 @@ const ReportCrime = () => {
         incident_date: incidentDate || null,
         location: location || "Not specified",
         description,
-        files: files.map((f) => f.name),
+        files: uploadedUrls,
         updates: [{ time: "Just now", text: "Complaint recorded on blockchain" }],
       });
       setSubmittedCaseId(caseId);
