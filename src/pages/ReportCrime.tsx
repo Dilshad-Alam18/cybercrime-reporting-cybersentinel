@@ -35,6 +35,7 @@ const ReportCrime = () => {
   const [description, setDescription] = useState("");
   const [incidentDate, setIncidentDate] = useState("");
   const [location, setLocation] = useState("");
+  const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
   const [files, setFiles] = useState<File[]>([]);
   const [submittedCaseId, setSubmittedCaseId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
