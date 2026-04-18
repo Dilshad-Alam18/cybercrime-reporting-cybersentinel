@@ -4,6 +4,7 @@ import { Shield, Lock, Eye, Bot, ChevronDown, ChevronUp, FileText, Users, Globe 
 import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { useAuth } from "@/contexts/AuthContext";
 
 const features = [
   { icon: Lock, title: "Anonymous Reporting", desc: "Submit complaints without revealing your identity. Blockchain ensures immutability." },
