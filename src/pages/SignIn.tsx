@@ -45,8 +45,8 @@ const SignIn = () => {
               Cyber<span className="text-primary">Sentinel</span>
             </span>
           </Link>
-          <h1 className="text-2xl font-bold text-foreground">Investigator Sign In</h1>
-          <p className="text-muted-foreground mt-2">Access your investigator account</p>
+          <h1 className="text-2xl font-bold text-foreground">Sign In</h1>
+          <p className="text-muted-foreground mt-2">Access your reporter or investigator account</p>
         </div>
 
         <form onSubmit={handleSignIn} className="space-y-4">

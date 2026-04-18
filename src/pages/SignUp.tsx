@@ -3,14 +3,18 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Shield, UserPlus, Loader2, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+type Role = "reporter" | "investigator";
 
 const SignUp = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const role = "investigator" as const;
+  const [role, setRole] = useState<Role>("reporter");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -62,13 +66,27 @@ const SignUp = () => {
               Cyber<span className="text-primary">Sentinel</span>
             </span>
           </Link>
-          <h1 className="text-2xl font-bold text-foreground">Investigator Sign Up</h1>
-          <p className="text-muted-foreground mt-2">Create your investigator account</p>
+          <h1 className="text-2xl font-bold text-foreground">Create Account</h1>
+          <p className="text-muted-foreground mt-2">Sign up as a reporter or investigator</p>
         </div>
 
         <form onSubmit={handleSignUp} className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Email</label>
+            <Label className="text-sm font-medium text-foreground">I am signing up as</Label>
+            <RadioGroup value={role} onValueChange={(v) => setRole(v as Role)} className="grid grid-cols-2 gap-3">
+              <label className={`flex items-center gap-2 rounded-md border p-3 cursor-pointer transition-colors ${role === "reporter" ? "border-primary bg-primary/10" : "border-border bg-card"}`}>
+                <RadioGroupItem value="reporter" id="r-reporter" />
+                <span className="text-sm font-medium">Reporter</span>
+              </label>
+              <label className={`flex items-center gap-2 rounded-md border p-3 cursor-pointer transition-colors ${role === "investigator" ? "border-primary bg-primary/10" : "border-border bg-card"}`}>
+                <RadioGroupItem value="investigator" id="r-investigator" />
+                <span className="text-sm font-medium">Investigator</span>
+              </label>
+            </RadioGroup>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-sm font-medium text-foreground">Email</Label>
             <Input
               type="email"
               placeholder="you@example.com"
@@ -79,7 +97,7 @@ const SignUp = () => {
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Password</label>
+            <Label className="text-sm font-medium text-foreground">Password</Label>
             <div className="relative">
               <Input
                 type={showPassword ? "text" : "password"}
@@ -100,7 +118,7 @@ const SignUp = () => {
             </div>
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Confirm Password</label>
+            <Label className="text-sm font-medium text-foreground">Confirm Password</Label>
             <Input
               type={showPassword ? "text" : "password"}
               placeholder="Repeat password"
@@ -113,7 +131,7 @@ const SignUp = () => {
 
           <Button type="submit" className="w-full glow-blue-sm" disabled={loading}>
             {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <UserPlus className="h-4 w-4 mr-2" />}
-            Create Investigator Account
+            Create {role === "investigator" ? "Investigator" : "Reporter"} Account
           </Button>
         </form>
 
