@@ -5,14 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Shield, UserPlus, Loader2, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const SignUp = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [role, setRole] = useState<"reporter" | "investigator">("reporter");
+  const role = "investigator" as const;
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -64,24 +62,11 @@ const SignUp = () => {
               Cyber<span className="text-primary">Sentinel</span>
             </span>
           </Link>
-          <h1 className="text-2xl font-bold text-foreground">Create Account</h1>
-          <p className="text-muted-foreground mt-2">Join CyberSentinel to report or investigate cybercrime</p>
+          <h1 className="text-2xl font-bold text-foreground">Investigator Sign Up</h1>
+          <p className="text-muted-foreground mt-2">Create your investigator account</p>
         </div>
 
         <form onSubmit={handleSignUp} className="space-y-4">
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-foreground">Account Type</Label>
-            <RadioGroup value={role} onValueChange={(v) => setRole(v as "reporter" | "investigator")} className="grid grid-cols-2 gap-3">
-              <label htmlFor="role-reporter" className={`flex items-center gap-2 rounded-md border p-3 cursor-pointer ${role === "reporter" ? "border-primary bg-primary/5" : "border-border"}`}>
-                <RadioGroupItem value="reporter" id="role-reporter" />
-                <span className="text-sm">Reporter</span>
-              </label>
-              <label htmlFor="role-investigator" className={`flex items-center gap-2 rounded-md border p-3 cursor-pointer ${role === "investigator" ? "border-primary bg-primary/5" : "border-border"}`}>
-                <RadioGroupItem value="investigator" id="role-investigator" />
-                <span className="text-sm">Investigator</span>
-              </label>
-            </RadioGroup>
-          </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">Email</label>
             <Input
@@ -128,7 +113,7 @@ const SignUp = () => {
 
           <Button type="submit" className="w-full glow-blue-sm" disabled={loading}>
             {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <UserPlus className="h-4 w-4 mr-2" />}
-            Create Account
+            Create Investigator Account
           </Button>
         </form>
 
