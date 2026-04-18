@@ -97,7 +97,7 @@ const SignIn = () => {
         <p className="text-center text-sm text-muted-foreground">
           Don't have an account?{" "}
           <Link to="/signup" className="text-primary hover:underline">
-            Sign up as an investigator
+            Sign up here
           </Link>
         </p>
       </div>

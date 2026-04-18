@@ -4,6 +4,7 @@ import { Shield, Lock, Eye, Bot, ChevronDown, ChevronUp, FileText, Users, Globe 
 import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { useAuth } from "@/contexts/AuthContext";
 
 const features = [
   { icon: Lock, title: "Anonymous Reporting", desc: "Submit complaints without revealing your identity. Blockchain ensures immutability." },
@@ -34,7 +35,11 @@ const FAQ = ({ q, a }: { q: string; a: string }) => {
   );
 };
 
-const Index = () => (
+const Index = () => {
+  const { hasRole } = useAuth();
+  const isInvestigator = hasRole("investigator") || hasRole("admin");
+
+  return (
   <div className="min-h-screen">
     <Navbar />
 
@@ -53,14 +58,25 @@ const Index = () => (
         <p className="text-muted-foreground text-lg md:text-xl mb-10 max-w-2xl mx-auto">
           Report cybercrimes anonymously, securely, and in your language. Blockchain-verified, AI-assisted, privacy-first.
         </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link to="/report">
-            <Button size="lg" className="glow-blue text-base px-8">Report a Crime</Button>
-          </Link>
-          <Link to="/track">
-            <Button size="lg" variant="outline" className="text-base px-8 border-border">Track Case</Button>
-          </Link>
-        </div>
+        {isInvestigator ? (
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link to="/investigator">
+              <Button size="lg" className="glow-blue text-base px-8">Open Investigator Dashboard</Button>
+            </Link>
+            <Link to="/network">
+              <Button size="lg" variant="outline" className="text-base px-8 border-border">Network Stats</Button>
+            </Link>
+          </div>
+        ) : (
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link to="/report">
+              <Button size="lg" className="glow-blue text-base px-8">Report a Crime</Button>
+            </Link>
+            <Link to="/track">
+              <Button size="lg" variant="outline" className="text-base px-8 border-border">Track Case</Button>
+            </Link>
+          </div>
+        )}
       </div>
     </section>
 
@@ -114,6 +130,7 @@ const Index = () => (
 
     <Footer />
   </div>
-);
+  );
+};
 
 export default Index;
