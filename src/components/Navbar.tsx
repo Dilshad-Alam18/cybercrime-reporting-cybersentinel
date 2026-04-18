@@ -9,15 +9,19 @@ const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, hasRole, signOut } = useAuth();
 
-  const navItems = [
-    { label: "Home", path: "/" },
-    { label: "Report Crime", path: "/report" },
-    { label: "Track Case", path: "/track" },
-    { label: "Network", path: "/network" },
-    ...(hasRole("investigator") || hasRole("admin")
-      ? [{ label: "Investigator", path: "/investigator" }]
-      : []),
-  ];
+  const isInvestigator = hasRole("investigator") || hasRole("admin");
+  const navItems = isInvestigator
+    ? [
+        { label: "Home", path: "/" },
+        { label: "Network", path: "/network" },
+        { label: "Investigator", path: "/investigator" },
+      ]
+    : [
+        { label: "Home", path: "/" },
+        { label: "Report Crime", path: "/report" },
+        { label: "Track Case", path: "/track" },
+        { label: "Network", path: "/network" },
+      ];
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
